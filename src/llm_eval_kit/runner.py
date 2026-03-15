@@ -20,6 +20,7 @@ from pathlib import Path
 import yaml
 
 from llm_eval_kit.evaluators.base import BaseEvaluator
+from llm_eval_kit.evaluators.contains import ContainsEvaluator
 from llm_eval_kit.evaluators.exact_match import ExactMatchEvaluator
 from llm_eval_kit.models.anthropic import AnthropicModel
 from llm_eval_kit.models.base import BaseLLM
@@ -56,10 +57,11 @@ def get_evaluator(name: str) -> BaseEvaluator:
     """Create an evaluator from its string name.
 
     Args:
-        name: "exact_match" (more coming: "contains", "similarity", "llm_judge")
+        name: "exact_match", "contains" (more coming: "similarity", "llm_judge")
     """
     evaluators = {
         "exact_match": ExactMatchEvaluator,
+        "contains": ContainsEvaluator,
     }
     if name not in evaluators:
         available = ", ".join(evaluators.keys())
