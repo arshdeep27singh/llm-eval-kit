@@ -27,7 +27,7 @@ from llm_eval_kit.models.anthropic import AnthropicModel
 from llm_eval_kit.models.base import BaseLLM
 from llm_eval_kit.models.ollama import OllamaModel
 from llm_eval_kit.models.openai import OpenAIModel
-from llm_eval_kit.schemas import EvalReport, EvalResult, EvalSuiteConfig, TestCase
+from llm_eval_kit.schemas import EvalReport, EvalResult, EvalSuiteConfig
 
 
 # ── Factory functions ────────────────────────────────────────────────────────

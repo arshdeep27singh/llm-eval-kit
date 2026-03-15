@@ -1,0 +1,52 @@
+# CI workflow — runs tests and linting on every push and pull request.
+#
+# This file tells GitHub Actions:
+#   1. WHEN to run (push to main, any PR)
+#   2. WHAT machine to use (Ubuntu Linux, free tier)
+#   3. WHAT steps to execute (install Python, install deps, run tests)
+#
+# GitHub Actions docs: https://docs.github.com/en/actions
+
+name: CI
+
+# WHEN to run this workflow
+on:
+  push:
+    branches: [main]       # Run on every push to main
+  pull_request:
+    branches: [main]       # Run on every PR targeting main
+
+jobs:
+  test:
+    # WHAT machine to use — ubuntu-latest is free for public repos
+    runs-on: ubuntu-latest
+
+    # Test against multiple Python versions (matrix strategy)
+    # This proves your tool works on different Python versions
+    strategy:
+      matrix:
+        python-version: ["3.10", "3.11", "3.12"]
+
+    steps:
+      # Step 1: Check out the code (clone the repo)
+      - uses: actions/checkout@v4
+
+      # Step 2: Set up Python
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      # Step 3: Install the project and dev dependencies
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[dev]"
+
+      # Step 4: Lint with ruff (catches code style issues)
+      - name: Lint with ruff
+        run: ruff check src/ tests/
+
+      # Step 5: Run tests
+      - name: Run tests
+        run: pytest -v

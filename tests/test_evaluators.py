@@ -9,7 +9,6 @@ Tests cover:
 from llm_eval_kit.evaluators.contains import ContainsEvaluator
 from llm_eval_kit.evaluators.exact_match import ExactMatchEvaluator
 from llm_eval_kit.evaluators.llm_judge import LLMJudgeEvaluator
-from llm_eval_kit.models.base import BaseLLM
 from llm_eval_kit.schemas import TestCase
 
 

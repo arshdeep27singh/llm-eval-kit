@@ -102,7 +102,7 @@ def run(
     console.print(table)
 
     # Step 4: Print summary
-    console.print(f"\n[bold]Summary:[/bold]")
+    console.print("\n[bold]Summary:[/bold]")
     console.print(f"  Model:    {report.model_name}")
     console.print(f"  Passed:   [green]{report.passed}[/green] / {report.total}")
     avg = report.average_score
