@@ -10,7 +10,7 @@
 
 model:
   provider: ollama            # "ollama", "openai", or "anthropic"
-  name: llama3                # model name (provider-specific)
+  name: llama3.2:1b           # model name (provider-specific) - hardcoding this for now, might want to make it more flexible later
 
 evaluator: exact_match        # grading strategy
 
