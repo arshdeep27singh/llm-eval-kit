@@ -111,5 +111,9 @@ class EvalSuiteConfig(BaseModel):
     # Which evaluator to use
     evaluator: str = "exact_match"
 
+    # Judge model config (only needed when evaluator is "llm_judge")
+    judge_provider: str | None = None
+    judge_model_name: str | None = None
+
     # The test cases to run
     test_cases: list[TestCase]

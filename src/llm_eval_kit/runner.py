@@ -22,6 +22,7 @@ import yaml
 from llm_eval_kit.evaluators.base import BaseEvaluator
 from llm_eval_kit.evaluators.contains import ContainsEvaluator
 from llm_eval_kit.evaluators.exact_match import ExactMatchEvaluator
+from llm_eval_kit.evaluators.llm_judge import LLMJudgeEvaluator
 from llm_eval_kit.models.anthropic import AnthropicModel
 from llm_eval_kit.models.base import BaseLLM
 from llm_eval_kit.models.ollama import OllamaModel
@@ -53,12 +54,18 @@ def get_model(provider: str, model_name: str) -> BaseLLM:
     return providers[provider](model_name)
 
 
-def get_evaluator(name: str) -> BaseEvaluator:
+def get_evaluator(name: str, judge_model: BaseLLM | None = None) -> BaseEvaluator:
     """Create an evaluator from its string name.
 
     Args:
-        name: "exact_match", "contains" (more coming: "similarity", "llm_judge")
+        name: "exact_match", "contains", or "llm_judge"
+        judge_model: Required when name is "llm_judge" — the LLM that grades responses.
     """
+    if name == "llm_judge":
+        if judge_model is None:
+            raise ValueError("llm_judge evaluator requires a judge model. Add a 'judge' section to your YAML.")
+        return LLMJudgeEvaluator(judge_model=judge_model)
+
     evaluators = {
         "exact_match": ExactMatchEvaluator,
         "contains": ContainsEvaluator,
@@ -95,10 +102,13 @@ def load_suite(path: str | Path) -> EvalSuiteConfig:
 
     # Flatten the nested "model" dict into top-level fields
     model_config = raw.get("model", {})
+    judge_config = raw.get("judge", {})
     return EvalSuiteConfig(
         model_provider=model_config.get("provider", "ollama"),
         model_name=model_config.get("name", "llama3"),
         evaluator=raw.get("evaluator", "exact_match"),
+        judge_provider=judge_config.get("provider"),
+        judge_model_name=judge_config.get("name"),
         test_cases=raw.get("test_cases", []),
     )
 
@@ -127,7 +137,16 @@ def run_eval(config: EvalSuiteConfig, dry_run: bool = False) -> EvalReport:
     else:
         model = get_model(config.model_provider, config.model_name)
 
-    evaluator = get_evaluator(config.evaluator)
+    # Create judge model if using LLM-as-a-Judge evaluator
+    judge_model = None
+    if config.evaluator == "llm_judge":
+        if config.judge_provider and config.judge_model_name:
+            judge_model = get_model(config.judge_provider, config.judge_model_name)
+        else:
+            # Default: use the same model as both the test subject and the judge
+            judge_model = model
+
+    evaluator = get_evaluator(config.evaluator, judge_model=judge_model)
     results: list[EvalResult] = []
 
     for i, test_case in enumerate(config.test_cases, start=1):
