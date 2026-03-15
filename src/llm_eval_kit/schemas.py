@@ -91,12 +91,17 @@ class EvalSuiteConfig(BaseModel):
     This is what the user writes in their YAML file:
 
         model:
-          provider: ollama
-          name: llama3
+          provider: ollama        # or "openai" or "anthropic"
+          name: llama3            # model-specific name
         evaluator: exact_match
         test_cases:
           - prompt: "What is 2+2?"
             expected: "4"
+
+    Supported providers:
+        - ollama:    free, local (llama3, mistral, gemma, etc.)
+        - openai:    needs OPENAI_API_KEY (gpt-4o, gpt-4, gpt-3.5-turbo)
+        - anthropic: needs ANTHROPIC_API_KEY (claude-sonnet-4-20250514, claude-3-opus, etc.)
     """
 
     # Model configuration
