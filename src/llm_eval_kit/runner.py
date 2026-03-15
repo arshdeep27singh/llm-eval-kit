@@ -103,7 +103,7 @@ def load_suite(path: str | Path) -> EvalSuiteConfig:
 
 # ── Runner ───────────────────────────────────────────────────────────────────
 
-def run_eval(config: EvalSuiteConfig) -> EvalReport:
+def run_eval(config: EvalSuiteConfig, dry_run: bool = False) -> EvalReport:
     """Run the full evaluation pipeline.
 
     This is the main entry point. Given a config, it:
@@ -113,10 +113,18 @@ def run_eval(config: EvalSuiteConfig) -> EvalReport:
         4. Grades the response
         5. Returns a complete report
 
+    If dry_run=True, uses a fake model that returns expected answers.
+    Useful for testing the pipeline without a real LLM.
+
     If a single test case fails (LLM error, timeout, etc.), it records
     the error and continues — one bad test doesn't stop the whole suite.
     """
-    model = get_model(config.model_provider, config.model_name)
+    if dry_run:
+        from llm_eval_kit.models.dry_run import DryRunModel
+        model = DryRunModel()
+    else:
+        model = get_model(config.model_provider, config.model_name)
+
     evaluator = get_evaluator(config.evaluator)
     results: list[EvalResult] = []
 
@@ -124,6 +132,10 @@ def run_eval(config: EvalSuiteConfig) -> EvalReport:
         print(f"  [{i}/{len(config.test_cases)}] {test_case.prompt[:60]}...")
 
         try:
+            # In dry-run mode, feed the expected answer to the mock model
+            if dry_run and hasattr(model, '_expected'):
+                model._expected = test_case.expected
+
             # Step 1: Get LLM response
             response = model.generate(test_case.prompt)
 

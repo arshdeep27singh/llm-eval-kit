@@ -40,17 +40,27 @@ def run(
         help="Path to the YAML eval suite file.",
         exists=True,  # Typer checks the file exists before running
     ),
+    dry_run: bool = typer.Option(
+        False,
+        "--dry-run",
+        help="Use a mock model (returns expected answers). No real LLM needed.",
+    ),
 ):
     """Run an evaluation suite against an LLM.
 
-    Example:
+    Examples:
         llm-eval-kit run examples/sample_eval.yaml
+        llm-eval-kit run examples/sample_eval.yaml --dry-run
     """
     console.print(f"\n[bold blue]llm-eval-kit v{__version__}[/bold blue]\n")
 
     # Step 1: Load the YAML config
     console.print(f"Loading suite: [cyan]{suite}[/cyan]")
     config = load_suite(suite)
+
+    if dry_run:
+        console.print("[yellow]Dry-run mode:[/yellow] using mock model (returns expected answers)")
+
     console.print(
         f"Model: [green]{config.model_provider}/{config.model_name}[/green]  "
         f"Evaluator: [green]{config.evaluator}[/green]  "
@@ -59,7 +69,7 @@ def run(
 
     # Step 2: Run all evaluations
     console.print("[bold]Running evaluations...[/bold]\n")
-    report = run_eval(config)
+    report = run_eval(config, dry_run=dry_run)
 
     # Step 3: Display results as a table
     table = Table(title="\nEvaluation Results", show_lines=True)

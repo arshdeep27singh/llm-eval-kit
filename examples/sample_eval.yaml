@@ -1,0 +1,36 @@
+# Sample evaluation suite for llm-eval-kit
+#
+# Run it:
+#   llm-eval-kit run examples/sample_eval.yaml
+#
+# This file defines:
+#   1. Which model to test (provider + name)
+#   2. Which evaluator to grade with
+#   3. The test cases (prompt + expected answer)
+
+model:
+  provider: ollama            # "ollama", "openai", or "anthropic"
+  name: llama3                # model name (provider-specific)
+
+evaluator: exact_match        # grading strategy
+
+test_cases:
+  - prompt: "What is the capital of France? Answer in one word."
+    expected: "Paris"
+    tags: [geography, factual]
+
+  - prompt: "What is 2 + 2? Answer with just the number."
+    expected: "4"
+    tags: [math, easy]
+
+  - prompt: "What is the largest planet in our solar system? Answer in one word."
+    expected: "Jupiter"
+    tags: [science, factual]
+
+  - prompt: "What programming language is known for the GIL (Global Interpreter Lock)? Answer in one word."
+    expected: "Python"
+    tags: [programming, factual]
+
+  - prompt: "What is the chemical symbol for water? Answer with just the formula."
+    expected: "H2O"
+    tags: [chemistry, factual]
