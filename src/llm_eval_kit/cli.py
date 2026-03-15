@@ -20,6 +20,7 @@ from rich.console import Console
 from rich.table import Table
 
 from llm_eval_kit import __version__
+from llm_eval_kit.reporters.json_report import save_json_report
 from llm_eval_kit.runner import load_suite, run_eval
 
 # Create the Typer app — this is what gets called when user types "llm-eval-kit"
@@ -45,12 +46,18 @@ def run(
         "--dry-run",
         help="Use a mock model (returns expected answers). No real LLM needed.",
     ),
+    output: Path | None = typer.Option(
+        None,
+        "--output", "-o",
+        help="Save results to a JSON file (e.g., --output results.json).",
+    ),
 ):
     """Run an evaluation suite against an LLM.
 
     Examples:
         llm-eval-kit run examples/sample_eval.yaml
         llm-eval-kit run examples/sample_eval.yaml --dry-run
+        llm-eval-kit run examples/sample_eval.yaml --output results.json
     """
     console.print(f"\n[bold blue]llm-eval-kit v{__version__}[/bold blue]\n")
 
@@ -101,6 +108,11 @@ def run(
     avg = report.average_score
     avg_color = "green" if avg >= 0.7 else "yellow" if avg >= 0.5 else "red"
     console.print(f"  Average:  [{avg_color}]{avg:.2f}[/{avg_color}]\n")
+
+    # Step 5: Save JSON report if --output was provided
+    if output:
+        save_json_report(report, output)
+        console.print(f"Results saved to: [cyan]{output}[/cyan]\n")
 
 
 @app.command()
