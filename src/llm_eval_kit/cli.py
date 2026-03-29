@@ -20,6 +20,7 @@ from rich.console import Console
 from rich.table import Table
 
 from llm_eval_kit import __version__
+from llm_eval_kit.reporters.html_report import save_html_report
 from llm_eval_kit.reporters.json_report import save_json_report
 from llm_eval_kit.runner import load_suite, run_eval
 
@@ -50,6 +51,11 @@ def run(
         None,
         "--output", "-o",
         help="Save results to a JSON file (e.g., --output results.json).",
+    ),
+    html: Path | None = typer.Option(
+        None,
+        "--html",
+        help="Save results as an interactive HTML report (e.g., --html report.html).",
     ),
 ):
     """Run an evaluation suite against an LLM.
@@ -112,10 +118,85 @@ def run(
     # Step 5: Save JSON report if --output was provided
     if output:
         save_json_report(report, output)
-        console.print(f"Results saved to: [cyan]{output}[/cyan]\n")
+        console.print(f"JSON report saved to: [cyan]{output}[/cyan]")
+
+    # Step 6: Save HTML report if --html was provided
+    if html:
+        save_html_report(report, html)
+        console.print(f"HTML report saved to: [cyan]{html}[/cyan]")
+
+    console.print()
 
 
 @app.command()
 def version():
     """Show the version."""
     console.print(f"llm-eval-kit v{__version__}")
+
+
+@app.command()
+def scrape(
+    url: str = typer.Argument(
+        ...,
+        help="URL to scrape Q&A pairs from (e.g., a FAQ page).",
+    ),
+    output: Path = typer.Option(
+        "scraped_eval.yaml",
+        "--output", "-o",
+        help="Path to save the generated YAML eval suite.",
+    ),
+    selector: str = typer.Option(
+        ".faq-item",
+        "--selector", "-s",
+        help="CSS selector for Q&A containers on the page.",
+    ),
+    tags: str = typer.Option(
+        "",
+        "--tags", "-t",
+        help="Comma-separated tags to add to all test cases.",
+    ),
+    evaluator: str = typer.Option(
+        "contains",
+        "--evaluator", "-e",
+        help="Evaluator to use in the generated suite (exact_match, contains, llm_judge).",
+    ),
+):
+    """Scrape Q&A pairs from a web page and generate a YAML eval suite.
+
+    Uses Playwright to render the page (handles JavaScript-heavy sites).
+
+    Examples:
+        llm-eval-kit scrape "https://example.com/faq" -o faq_eval.yaml
+        llm-eval-kit scrape "https://example.com/faq" --selector "details" --tags "faq,web"
+    """
+    from llm_eval_kit.scraper import ScrapeConfig, scrape_qa_pairs, save_scraped_yaml
+
+    console.print(f"\n[bold blue]llm-eval-kit v{__version__}[/bold blue] — Scraper\n")
+    console.print(f"Scraping: [cyan]{url}[/cyan]")
+
+    tag_list = [t.strip() for t in tags.split(",") if t.strip()]
+
+    config = ScrapeConfig(
+        qa_container_selector=selector,
+        tags=tag_list,
+    )
+
+    qa_pairs = scrape_qa_pairs(url, config)
+
+    if not qa_pairs:
+        console.print("[yellow]No Q&A pairs found.[/yellow] Try different CSS selectors with --selector.")
+        raise typer.Exit(1)
+
+    console.print(f"Found [green]{len(qa_pairs)}[/green] Q&A pairs\n")
+
+    # Show a preview
+    for i, qa in enumerate(qa_pairs[:5], 1):
+        console.print(f"  [dim]{i}.[/dim] [cyan]{qa.question[:80]}[/cyan]")
+        console.print(f"     → {qa.answer[:80]}...")
+        console.print()
+
+    if len(qa_pairs) > 5:
+        console.print(f"  [dim]... and {len(qa_pairs) - 5} more[/dim]\n")
+
+    save_scraped_yaml(qa_pairs, output, evaluator=evaluator)
+    console.print(f"Saved eval suite to: [cyan]{output}[/cyan]\n")

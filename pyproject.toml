@@ -37,6 +37,11 @@ dev = [
     "pytest>=8.0",
     "ruff>=0.4.0",        # Linter + formatter
 ]
+playwright = [
+    "playwright>=1.40.0",      # Browser automation for E2E tests + scraping
+    "pytest-playwright>=0.4.0", # Pytest integration for Playwright
+    "lxml>=5.0.0",             # Fast HTML parser for web scraping
+]
 
 # This creates the CLI command: when users type "llm-eval-kit", it runs cli.app()
 [project.scripts]

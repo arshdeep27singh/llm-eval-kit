@@ -38,11 +38,16 @@ def get_model(provider: str, model_name: str) -> BaseLLM:
     """Create a model provider from its string name.
 
     Args:
-        provider: "ollama", "openai", or "anthropic"
+        provider: "ollama", "openai", "anthropic", or "browser"
         model_name: Model-specific name like "llama3", "gpt-4o", etc.
+                    For "browser", this is the URL of the chat interface.
 
     This is the Factory Pattern — convert a string into an object.
     """
+    if provider == "browser":
+        from llm_eval_kit.models.browser import BrowserChatConfig, BrowserModel
+        return BrowserModel(BrowserChatConfig(url=model_name))
+
     providers = {
         "ollama": OllamaModel,
         "openai": OpenAIModel,
